@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LGEX - Sistema de Almoxarifado</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <style>
+    :root { 
+      --lgex-blue: #1e3c72; 
+      --lgex-accent: #3498db; 
+    }
+    
+    body { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    /* Login Screen */
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .login-card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 400px;
+      width: 100%;
+    }
+    
+    .logo-container {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .logo-icon {
+      font-size: 80px;
+      color: var(--lgex-blue);
+    }
+    
+    .btn-google {
+      background: white;
+      border: 2px solid #ddd;
+      padding: 12px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    
+    .btn-google:hover {
+      border-color: var(--lgex-accent);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .google-icon {
+      width: 20px;
+      margin-right: 10px;
+    }
+    
+    /* App Container */
+    #app {
+      display: none;
+      padding-bottom: 80px;
+    }
+    
+    .header-lgex { 
+      background: var(--lgex-blue); 
+      color: white; 
+      padding: 25px 20px; 
+      border-bottom: 5px solid var(--lgex-accent);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid white;
+    }
+    
+    .card-stat {
+      cursor: pointer; 
+      border: none; 
+      border-radius: 15px; 
+      transition: all 0.3s; 
+      background: white; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    
+    .card-stat:hover { 
+      transform: translateY(-8px); 
+      box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+    }
+    
+    .card-stat .material-icons {
+      font-size: 50px;
+    }
+    
+    .section-container { 
+      display: none; 
+      background: white; 
+      padding: 30px; 
+      border-radius: 20px; 
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      margin-top: 20px; 
+    }
+    
+    .btn-lgex { 
+      padding: 15px; 
+      font-weight: bold; 
+      border-radius: 12px;
+      transition: all 0.3s;
+    }
+    
+    .btn-lgex:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .pin-input { 
+      font-size: 28px !important; 
+      letter-spacing: 15px; 
+      text-align: center; 
+    }
+    
+    .table-responsive { 
+      max-height: 500px; 
+      overflow-y: auto;
+    }
+    
+    .admin-badge {
+      background: #ff6b6b;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .employee-badge {
+      background: #51cf66;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      padding: 10px 0;
+      display: none;
+      z-index: 1000;
+    }
+    
+    .bottom-nav.active {
+      display: block;
+    }
+    
+    .nav-item-bottom {
+      text-align: center;
+      padding: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .nav-item-bottom:hover {
+      background: #f8f9fa;
+    }
+    
+    .nav-item-bottom .material-icons {
+      font-size: 24px;
+      color: var(--lgex-blue);
+    }
+    
+    .nav-item-bottom small {
+      display: block;
+      font-size: 11px;
+      color: #666;
+      margin-top: 2px;
+    }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      display: none;
+    }
+    
+    .loading-overlay.active {
+      display: flex;
+    }
+    
+    .spinner-container {
+      text-align: center;
+      color: white;
+    }
+    
+    @media (max-width: 768px) {
+      .header-lgex h2 {
+        font-size: 1.3rem;
+      }
+      
+      .card-stat {
+        padding: 15px;
+      }
+      
+      .card-stat .material-icons {
+        font-size: 40px;
+      }
+      
+      .section-container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner-container">
+    <div class="spinner-border text-light" style="width: 3rem; height: 3rem;"></div>
+    <p class="mt-3">Carregando...</p>
+  </div>
+</div>
+
+<!-- Login Screen -->
+<div id="loginScreen" class="login-container">
+  <div class="login-card">
+    <div class="logo-container">
+      <span class="material-icons logo-icon">inventory_2</span>
+      <h3 class="mt-3" style="color: var(--lgex-blue);">LGEX Metalomecânica</h3>
+      <p class="text-muted">Sistema de Almoxarifado</p>
+    </div>
+    
+    <button id="btnGoogleLogin" class="btn btn-google w-100">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="google-icon" alt="Google">
+      Entrar com Google
+    </button>
+    
+    <div class="text-center mt-4">
+      <small class="text-muted">Desenvolvido por Ricardo Barros</small>
+    </div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app" class="container-fluid">
+  
+  <!-- Header -->
+  <div class="header-lgex">
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+      <div>
+        <h2 class="fw-bold mb-0">LGEX Metalomecânica</h2>
+        <p class="mb-0 opacity-75 small">Sistema Integrado de Almoxarifado</p>
+      </div>
+      <div class="user-info">
+        <img id="userAvatar" src="" alt="Avatar" class="user-avatar">
+        <div>
+          <div class="text-white"><strong id="userName"></strong></div>
+          <span id="userRole" class="admin-badge">Admin</span>
+        </div>
+        <button class="btn btn-sm btn-outline-light ms-3" onclick="logout()">
+          <span class="material-icons" style="font-size: 18px;">logout</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container py-4">
+    
+    <!-- Dashboard View -->
+    <div id="viewDash">
+      <!-- Stats Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-lg-3 col-6">
+          <div class="card-stat" onclick="exibirTabela('Materiais')">
+            <span class="material-icons text-primary">inventory_2</span>
+            <h3 id="stTotal" class="mt-2 mb-0">0</h3>
+            <small class="text-muted fw-bold">TOTAL ITENS</small>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="card-stat" onclick="exibirTabela('Avariados')">
+            <span class="material-icons text-danger">report_problem</span>
+            <h3 id="stAvarias" class="mt-2 mb-0">0</h3>
+            <small class="text-muted fw-bold">AVARIAS</small>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="card-stat" onclick="exibirTabela('Manutencao')">
+            <span class="material-icons text-warning">build_circle</span>
+            <h3 id="stManut" class="mt-2 mb-0">0</h3>
+            <small class="text-muted fw-bold">MANUTENÇÃO</small>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="card-stat" onclick="exibirTabela('Registros')">
+            <span class="material-icons text-success">history</span>
+            <h3 id="stRegs" class="mt-2 mb-0">0</h3>
+            <small class="text-muted fw-bold">REGISTROS</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-4 col-12">
+          <button class="btn btn-primary w-100 btn-lgex shadow-sm" onclick="abrir('secReg')">
+            <span class="material-icons align-middle">swap_horiz</span> RETIRADA / DEVOLUÇÃO
+          </button>
+        </div>
+        <div class="col-md-4 col-12">
+          <button class="btn btn-info w-100 btn-lgex shadow-sm text-white" onclick="abrir('secCons')">
+            <span class="material-icons align-middle">search</span> CONSULTAR ITEM
+          </button>
+        </div>
+        <div class="col-md-4 col-12">
+          <button class="btn btn-dark w-100 btn-lgex shadow-sm" onclick="gerarRelatorio()">
+            <span class="material-icons align-middle">picture_as_pdf</span> RELATÓRIO PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Only Buttons -->
+      <div id="adminButtons" class="row g-3 mb-4" style="display: none;">
+        <div class="col-md-4 col-12">
+          <button class="btn btn-outline-primary w-100 btn-lgex" onclick="abrir('secMat')">
+            <span class="material-icons align-middle">add</span> NOVO MATERIAL
+          </button>
+        </div>
+        <div class="col-md-4 col-12">
+          <button class="btn btn-outline-success w-100 btn-lgex" onclick="abrir('secUsr')">
+            <span class="material-icons align-middle">person_add</span> NOVO UTILIZADOR
+          </button>
+        </div>
+        <div class="col-md-4 col-12">
+          <button class="btn btn-outline-danger w-100 btn-lgex" onclick="abrir('secEdit')">
+            <span class="material-icons align-middle">edit</span> EDITAR/EXCLUIR
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registro de Movimentação -->
+    <div id="secReg" class="section-container">
+      <h4 class="mb-4 text-primary">
+        <span class="material-icons align-middle">swap_horiz</span> Registro de Movimentação
+      </h4>
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="btn-group w-100 mb-3">
+            <input type="radio" class="btn-check" name="tMov" id="r1" value="Retirada" checked>
+            <label class="btn btn-outline-primary p-3" for="r1">
+              <span class="material-icons align-middle">output</span> RETIRADA
+            </label>
+            <input type="radio" class="btn-check" name="tMov" id="r2" value="Devolução">
+            <label class="btn btn-outline-success p-3" for="r2">
+              <span class="material-icons align-middle">input</span> DEVOLUÇÃO
+            </label>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <label class="fw-bold">Material</label>
+          <select id="rMaterial" class="form-select p-3">
+            <option value="">Selecione um material...</option>
+          </select>
+        </div>
+        
+        <div class="col-md-6">
+          <label class="fw-bold">Estado do Material</label>
+          <input type="text" id="rEstado" class="form-control p-3 bg-light" readonly>
+        </div>
+        
+        <div class="col-12">
+          <label class="fw-bold">Observações</label>
+          <textarea id="rObs" class="form-control" rows="3" placeholder="Descreva detalhes da movimentação..."></textarea>
+        </div>
+        
+        <div class="col-12 mt-4">
+          <div class="alert alert-info">
+            <label class="d-block fw-bold mb-2">
+              <span class="material-icons align-middle">lock</span> VALIDAÇÃO (PIN de 4 dígitos)
+            </label>
+            <input type="password" id="rPin" class="form-control pin-input" maxlength="4" inputmode="numeric" placeholder="****">
+          </div>
+        </div>
+      </div>
+      
+      <div class="row mt-4">
+        <div class="col-md-6 col-12 mb-2">
+          <button class="btn btn-success w-100 p-3 fw-bold" onclick="salvarMovimentacao()">
+            <span class="material-icons align-middle">check_circle</span> CONFIRMAR REGISTRO
+          </button>
+        </div>
+        <div class="col-md-6 col-12">
+          <button class="btn btn-light w-100 p-3" onclick="voltar()">
+            <span class="material-icons align-middle">arrow_back</span> VOLTAR
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consulta de Item -->
+    <div id="secCons" class="section-container">
+      <h4 class="mb-4">
+        <span class="material-icons align-middle">search</span> Consulta de Histórico
+      </h4>
+      <div class="input-group mb-4">
+        <select id="consMaterial" class="form-select p-3">
+          <option value="">Selecione um material...</option>
+        </select>
+        <button class="btn btn-primary px-4" onclick="buscarHistorico()">
+          <span class="material-icons">search</span> BUSCAR
+        </button>
+      </div>
+      <div id="resConsulta"></div>
+      <button class="btn btn-light w-100 mt-3" onclick="voltar()">VOLTAR</button>
+    </div>
+
+    <!-- Lista/Tabela -->
+    <div id="secList" class="section-container">
+      <h4 id="listTitle" class="mb-3">Lista</h4>
+      <div class="input-group mb-3">
+        <span class="input-group-text">
+          <span class="material-icons">filter_list</span>
+        </span>
+        <input type="text" id="tableFilter" class="form-control" placeholder="Filtrar resultados..." onkeyup="filtrarTabela()">
+      </div>
+      <div id="tabContent" class="table-responsive"></div>
+      <button class="btn btn-light w-100 mt-3" onclick="voltar()">VOLTAR</button>
+    </div>
+
+    <!-- Cadastro Material -->
+    <div id="secMat" class="section-container">
+      <h4 class="mb-4">
+        <span class="material-icons align-middle">add_box</span> Cadastrar Material
+      </h4>
+      <div class="mb-3">
+        <label class="fw-bold">Nome do Material/Equipamento</label>
+        <input type="text" id="mNome" class="form-control p-3" placeholder="Ex: Furadeira Bosch 500W">
+      </div>
+      <div class="mb-3">
+        <label class="fw-bold">Categoria</label>
+        <select id="mCat" class="form-select p-3">
+          <option>Ferramenta</option>
+          <option>Máquina</option>
+          <option>Insumo</option>
+          <option>EPI</option>
+          <option>Equipamento</option>
+        </select>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="fw-bold">Estado</label>
+          <select id="mEst" class="form-select p-3">
+            <option value="Bom">Bom</option>
+            <option value="Regular">Regular</option>
+            <option value="Avariado">Avariado</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="fw-bold">Quantidade</label>
+          <input type="number" id="mQtd" class="form-control p-3" placeholder="1" value="1" min="1">
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="fw-bold">Próxima Manutenção (Opcional)</label>
+        <input type="date" id="mMan" class="form-control p-3">
+      </div>
+      <div class="row">
+        <div class="col-md-6 col-12 mb-2">
+          <button class="btn btn-primary w-100 p-3 fw-bold" onclick="salvarMaterial()">
+            <span class="material-icons align-middle">save</span> SALVAR MATERIAL
+          </button>
+        </div>
+        <div class="col-md-6 col-12">
+          <button class="btn btn-light w-100 p-3" onclick="voltar()">VOLTAR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cadastro Utilizador -->
+    <div id="secUsr" class="section-container">
+      <h4 class="mb-4">
+        <span class="material-icons align-middle">person_add</span> Cadastrar Utilizador
+      </h4>
+      <div class="mb-3">
+        <label class="fw-bold">Nome Completo</label>
+        <input type="text" id="uNome" class="form-control p-3" placeholder="Ex: João Silva">
+      </div>
+      <div class="mb-3">
+        <label class="fw-bold">E-mail</label>
+        <input type="email" id="uEmail" class="form-control p-3" placeholder="joao@exemplo.com">
+      </div>
+      <div class="mb-3">
+        <label class="fw-bold">Nível de Acesso</label>
+        <select id="uRole" class="form-select p-3">
+          <option value="funcionario">Funcionário</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="fw-bold">PIN de Segurança (4 dígitos)</label>
+        <input type="password" id="uPin" class="form-control p-3 pin-input" maxlength="4" inputmode="numeric" placeholder="****">
+      </div>
+      <div class="row">
+        <div class="col-md-6 col-12 mb-2">
+          <button class="btn btn-success w-100 p-3 fw-bold" onclick="salvarUtilizador()">
+            <span class="material-icons align-middle">save</span> SALVAR UTILIZADOR
+          </button>
+        </div>
+        <div class="col-md-6 col-12">
+          <button class="btn btn-light w-100 p-3" onclick="voltar()">VOLTAR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edição/Exclusão -->
+    <div id="secEdit" class="section-container">
+      <h4 class="mb-4 text-danger">
+        <span class="material-icons align-middle">edit</span> Editar ou Excluir Registros
+      </h4>
+      
+      <div class="btn-group w-100 mb-4">
+        <input type="radio" class="btn-check" name="tEdit" id="e1" value="materiais" checked>
+        <label class="btn btn-outline-primary p-3" for="e1">Materiais</label>
+        <input type="radio" class="btn-check" name="tEdit" id="e2" value="utilizadores">
+        <label class="btn btn-outline-success p-3" for="e2">Utilizadores</label>
+      </div>
+      
+      <div id="editContent"></div>
+      
+      <button class="btn btn-light w-100 mt-3" onclick="voltar()">VOLTAR</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Bottom Navigation (Mobile) -->
+<div id="bottomNav" class="bottom-nav">
+  <div class="row g-0">
+    <div class="col nav-item-bottom" onclick="voltar()">
+      <span class="material-icons">home</span>
+      <small>Início</small>
+    </div>
+    <div class="col nav-item-bottom" onclick="abrir('secReg')">
+      <span class="material-icons">swap_horiz</span>
+      <small>Registro</small>
+    </div>
+    <div class="col nav-item-bottom" onclick="abrir('secCons')">
+      <span class="material-icons">search</span>
+      <small>Consulta</small>
+    </div>
+    <div class="col nav-item-bottom" onclick="gerarRelatorio()">
+      <span class="material-icons">description</span>
+      <small>Relatório</small>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<!-- App Script -->
+<script src="app.js"></script>
+
+</body>
+</html>
