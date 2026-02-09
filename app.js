@@ -1,7 +1,11 @@
 /**
  * SISTEMA DE GESTÃO DE ALMOXARIFADO - LGEX METALOMECÂNICA
- * Versão Web com Firebase
+ * Versão Web com Firebase - SEM PIN
  * Desenvolvedor: Ricardo Barros
+ * 
+ * PERMISSÕES:
+ * - Funcionário: Apenas consulta (ver materiais e histórico)
+ * - Administrador: Controle total (cadastrar, editar, excluir, registrar movimentações)
  */
 
 // ========== CONFIGURAÇÃO FIREBASE ==========
@@ -14,6 +18,7 @@ const firebaseConfig = {
   messagingSenderId: "555548417766",
   appId: "1:555548417766:web:85dbe363620264bfa2a527"
 };
+
 
 // Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
@@ -63,38 +68,29 @@ function logout() {
   }
 }
 
-// Verificar primeiro acesso
+// Verificar primeiro acesso (SEM PIN)
 async function verificarPrimeiroAcesso(user) {
   const userDoc = await db.collection('utilizadores').doc(user.uid).get();
   
   if (!userDoc.exists) {
-    // Primeiro usuário é admin
+    // Primeiro usuário é admin automaticamente
     const snapshot = await db.collection('utilizadores').get();
     const isPrimeiroUsuario = snapshot.empty;
-    
-    // Solicitar PIN
-    let pin = '';
-    while (pin.length !== 4 || isNaN(pin)) {
-      pin = prompt('Defina seu PIN de segurança (4 dígitos):');
-      if (pin === null) {
-        auth.signOut();
-        return;
-      }
-    }
     
     // Criar registro do usuário
     await db.collection('utilizadores').doc(user.uid).set({
       nome: user.displayName,
       email: user.email,
-      pin: pin,
       role: isPrimeiroUsuario ? 'admin' : 'funcionario',
       fotoPerfil: user.photoURL,
       criadoEm: firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    alert(isPrimeiroUsuario ? 
-      'Bem-vindo! Você é o primeiro usuário e foi definido como Administrador.' : 
-      'Cadastro realizado com sucesso! Aguarde aprovação do administrador.');
+    if (isPrimeiroUsuario) {
+      alert('Bem-vindo! Você é o primeiro usuário e foi definido como Administrador.');
+    } else {
+      alert('Cadastro realizado!\n\nVocê foi registrado como Funcionário (apenas consulta).\n\nSe precisar de acesso administrativo, solicite ao administrador do sistema.');
+    }
   }
 }
 
@@ -114,10 +110,16 @@ async function carregarDadosUsuario(user) {
     roleBadge.className = 'admin-badge';
     roleBadge.textContent = 'Administrador';
     document.getElementById('adminButtons').style.display = 'flex';
+    // Mostrar botão de registro na navegação mobile
+    const btnNavReg = document.getElementById('btnNavReg');
+    if (btnNavReg) btnNavReg.style.display = 'block';
   } else {
     roleBadge.className = 'employee-badge';
     roleBadge.textContent = 'Funcionário';
     document.getElementById('adminButtons').style.display = 'none';
+    // Esconder botão de registro na navegação mobile
+    const btnNavReg = document.getElementById('btnNavReg');
+    if (btnNavReg) btnNavReg.style.display = 'none';
   }
 }
 
@@ -170,6 +172,15 @@ function abrir(secao) {
       });
     });
   }
+}
+
+// Abrir seção apenas se for admin
+function abrirSeAdmin(secao) {
+  if (userRole !== 'admin') {
+    alert('Acesso negado!\n\nApenas administradores podem registrar movimentações.\n\nVocê tem permissão apenas para consultar materiais e histórico.');
+    return;
+  }
+  abrir(secao);
 }
 
 function voltar() {
@@ -269,13 +280,18 @@ function preencherSelectMateriais() {
   });
 }
 
-// ========== MOVIMENTAÇÃO ==========
+// ========== MOVIMENTAÇÃO (APENAS ADMIN - SEM PIN) ==========
 
 async function salvarMovimentacao() {
   try {
+    // VERIFICAR SE É ADMIN
+    if (userRole !== 'admin') {
+      alert('Acesso negado!\n\nApenas administradores podem registrar movimentações.');
+      return;
+    }
+    
     const tipo = document.querySelector('input[name="tMov"]:checked').value;
     const materialId = document.getElementById('rMaterial').value;
-    const pin = document.getElementById('rPin').value;
     const obs = document.getElementById('rObs').value;
     
     // Validações
@@ -284,28 +300,17 @@ async function salvarMovimentacao() {
       return;
     }
     
-    if (!pin || pin.length !== 4) {
-      alert('Digite seu PIN de 4 dígitos!');
-      return;
-    }
-    
     showLoading(true);
-    
-    // Verificar PIN
-    const userDoc = await db.collection('utilizadores').doc(currentUser.uid).get();
-    const userData = userDoc.data();
-    
-    if (userData.pin !== pin) {
-      showLoading(false);
-      alert('PIN incorreto!');
-      return;
-    }
     
     // Buscar dados do material
     const materialDoc = await db.collection('materiais').doc(materialId).get();
     const materialData = materialDoc.data();
     
-    // Registrar movimentação
+    // Buscar dados do usuário
+    const userDoc = await db.collection('utilizadores').doc(currentUser.uid).get();
+    const userData = userDoc.data();
+    
+    // Registrar movimentação (SEM VALIDAÇÃO DE PIN)
     await db.collection('registros').add({
       tipo: tipo,
       materialId: materialId,
@@ -315,17 +320,15 @@ async function salvarMovimentacao() {
       usuarioNome: userData.nome,
       usuarioEmail: userData.email,
       observacoes: obs,
-      dataHora: firebase.firestore.FieldValue.serverTimestamp(),
-      validadoPorPIN: true
+      dataHora: firebase.firestore.FieldValue.serverTimestamp()
     });
     
     showLoading(false);
-    alert(`${tipo} registrada com sucesso!`);
+    alert(`✅ ${tipo} registrada com sucesso!\n\nMaterial: ${materialData.nome}\nResponsável: ${userData.nome}`);
     
     // Limpar formulário
     document.getElementById('rMaterial').value = '';
     document.getElementById('rEstado').value = '';
-    document.getElementById('rPin').value = '';
     document.getElementById('rObs').value = '';
     
     voltar();
@@ -337,7 +340,7 @@ async function salvarMovimentacao() {
   }
 }
 
-// ========== CONSULTA DE HISTÓRICO ==========
+// ========== CONSULTA DE HISTÓRICO (TODOS) ==========
 
 async function buscarHistorico() {
   try {
@@ -378,7 +381,7 @@ async function buscarHistorico() {
             <tr>
               <th>Data/Hora</th>
               <th>Tipo</th>
-              <th>Usuário</th>
+              <th>Responsável</th>
               <th>Observações</th>
             </tr>
           </thead>
@@ -424,7 +427,7 @@ async function buscarHistorico() {
   }
 }
 
-// ========== TABELAS/LISTAS ==========
+// ========== TABELAS/LISTAS (TODOS) ==========
 
 async function exibirTabela(tipo) {
   try {
@@ -563,7 +566,7 @@ function montarTabelaRegistros(dados) {
             <th>Data/Hora</th>
             <th>Tipo</th>
             <th>Material</th>
-            <th>Usuário</th>
+            <th>Responsável</th>
             <th>Observações</th>
           </tr>
         </thead>
@@ -610,12 +613,12 @@ function filtrarTabela() {
   });
 }
 
-// ========== CADASTRO DE MATERIAL (ADMIN) ==========
+// ========== CADASTRO DE MATERIAL (APENAS ADMIN) ==========
 
 async function salvarMaterial() {
   try {
     if (userRole !== 'admin') {
-      alert('Apenas administradores podem cadastrar materiais!');
+      alert('Acesso negado!\n\nApenas administradores podem cadastrar materiais!');
       return;
     }
     
@@ -655,7 +658,7 @@ async function salvarMaterial() {
     });
     
     showLoading(false);
-    alert(`Material cadastrado com sucesso!\nCódigo: ${novoCodigo}`);
+    alert(`✅ Material cadastrado com sucesso!\n\nCódigo: ${novoCodigo}\nNome: ${nome}`);
     
     // Limpar formulário
     document.getElementById('mNome').value = '';
@@ -674,27 +677,21 @@ async function salvarMaterial() {
   }
 }
 
-// ========== CADASTRO DE UTILIZADOR (ADMIN) ==========
+// ========== CADASTRO DE UTILIZADOR (APENAS ADMIN - SEM PIN) ==========
 
 async function salvarUtilizador() {
   try {
     if (userRole !== 'admin') {
-      alert('Apenas administradores podem cadastrar utilizadores!');
+      alert('Acesso negado!\n\nApenas administradores podem cadastrar utilizadores!');
       return;
     }
     
     const nome = document.getElementById('uNome').value.trim();
     const email = document.getElementById('uEmail').value.trim();
     const role = document.getElementById('uRole').value;
-    const pin = document.getElementById('uPin').value;
     
-    if (!nome || !email || !pin) {
+    if (!nome || !email) {
       alert('Preencha todos os campos!');
-      return;
-    }
-    
-    if (pin.length !== 4 || isNaN(pin)) {
-      alert('O PIN deve ter exatamente 4 dígitos numéricos!');
       return;
     }
     
@@ -718,11 +715,10 @@ async function salvarUtilizador() {
       return;
     }
     
-    // Criar utilizador (sem autenticação, apenas registro)
+    // Criar utilizador (SEM PIN)
     await db.collection('utilizadores').add({
       nome: nome,
       email: email,
-      pin: pin,
       role: role,
       fotoPerfil: null,
       ativo: true,
@@ -731,12 +727,14 @@ async function salvarUtilizador() {
     });
     
     showLoading(false);
-    alert('Utilizador cadastrado com sucesso!\n\nOriente o usuário a fazer login com a conta Google associada ao e-mail: ' + email);
+    
+    const nivelTexto = role === 'admin' ? 'Administrador (controle total)' : 'Funcionário (apenas consulta)';
+    
+    alert(`✅ Utilizador cadastrado com sucesso!\n\nNome: ${nome}\nE-mail: ${email}\nNível: ${nivelTexto}\n\nOriente o usuário a fazer login com a conta Google associada ao e-mail: ${email}`);
     
     // Limpar formulário
     document.getElementById('uNome').value = '';
     document.getElementById('uEmail').value = '';
-    document.getElementById('uPin').value = '';
     
     // Atualizar cache
     await carregarCaches();
@@ -750,7 +748,7 @@ async function salvarUtilizador() {
   }
 }
 
-// ========== EDIÇÃO E EXCLUSÃO (ADMIN) ==========
+// ========== EDIÇÃO E EXCLUSÃO (APENAS ADMIN) ==========
 
 async function carregarEdicao(tipo) {
   if (userRole !== 'admin') {
@@ -898,7 +896,7 @@ async function editarMaterial(id) {
     });
     
     showLoading(false);
-    alert('Material atualizado com sucesso!');
+    alert('✅ Material atualizado com sucesso!');
     
     carregarEdicao('materiais');
     await carregarCaches();
@@ -921,7 +919,7 @@ async function excluirMaterial(id, codigo) {
     await db.collection('materiais').doc(id).delete();
     
     showLoading(false);
-    alert('Material excluído com sucesso!');
+    alert('✅ Material excluído com sucesso!');
     
     carregarEdicao('materiais');
     await carregarCaches();
@@ -955,7 +953,7 @@ async function editarUtilizador(id) {
     });
     
     showLoading(false);
-    alert('Utilizador atualizado com sucesso!');
+    alert('✅ Utilizador atualizado com sucesso!');
     
     carregarEdicao('utilizadores');
     await carregarCaches();
@@ -978,7 +976,7 @@ async function excluirUtilizador(id, nome) {
     await db.collection('utilizadores').doc(id).delete();
     
     showLoading(false);
-    alert('Utilizador excluído com sucesso!');
+    alert('✅ Utilizador excluído com sucesso!');
     
     carregarEdicao('utilizadores');
     await carregarCaches();
@@ -1075,7 +1073,7 @@ async function gerarRelatorio() {
               <th>Data/Hora</th>
               <th>Tipo</th>
               <th>Material</th>
-              <th>Usuário</th>
+              <th>Responsável</th>
               <th>Observações</th>
             </tr>
           </thead>
@@ -1104,15 +1102,13 @@ async function gerarRelatorio() {
         <div class="footer">
           <p><strong>LGEX Metalomecânica Unipessoal Lda</strong></p>
           <p>Sistema desenvolvido por Ricardo Barros</p>
+          <p>SEM PIN - Controle apenas por nível de acesso</p>
         </div>
       </body>
       </html>
     `;
     
     // Converter HTML para PDF e baixar
-    // Nota: Para converter para PDF no navegador, você precisará de uma biblioteca adicional
-    // Por enquanto, vamos criar um arquivo HTML para o usuário imprimir como PDF
-    
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1124,7 +1120,7 @@ async function gerarRelatorio() {
     URL.revokeObjectURL(url);
     
     showLoading(false);
-    alert('Relatório gerado!\n\nAbra o arquivo HTML baixado e use Ctrl+P (ou Cmd+P) para imprimir como PDF.');
+    alert('✅ Relatório gerado!\n\nAbra o arquivo HTML baixado e use Ctrl+P (ou Cmd+P) para imprimir como PDF.');
     
   } catch (error) {
     showLoading(false);
@@ -1135,4 +1131,5 @@ async function gerarRelatorio() {
 
 // ========== INICIALIZAÇÃO ==========
 
-console.log('Sistema LGEX carregado - Versão 5.0 Web');
+console.log('Sistema LGEX carregado - Versão 5.0 Web (SEM PIN)');
+console.log('Permissões: Admin = Controle Total | Funcionário = Apenas Consulta');
