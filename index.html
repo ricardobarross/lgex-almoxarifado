@@ -140,12 +140,6 @@
       box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
     
-    .pin-input { 
-      font-size: 28px !important; 
-      letter-spacing: 15px; 
-      text-align: center; 
-    }
-    
     .table-responsive { 
       max-height: 500px; 
       overflow-y: auto;
@@ -339,19 +333,14 @@
         </div>
       </div>
 
-      <!-- Action Buttons -->
+      <!-- Action Buttons (Todos podem ver) -->
       <div class="row g-3 mb-4">
-        <div class="col-md-4 col-12">
-          <button class="btn btn-primary w-100 btn-lgex shadow-sm" onclick="abrir('secReg')">
-            <span class="material-icons align-middle">swap_horiz</span> RETIRADA / DEVOLUÇÃO
-          </button>
-        </div>
-        <div class="col-md-4 col-12">
+        <div class="col-md-6 col-12">
           <button class="btn btn-info w-100 btn-lgex shadow-sm text-white" onclick="abrir('secCons')">
             <span class="material-icons align-middle">search</span> CONSULTAR ITEM
           </button>
         </div>
-        <div class="col-md-4 col-12">
+        <div class="col-md-6 col-12">
           <button class="btn btn-dark w-100 btn-lgex shadow-sm" onclick="gerarRelatorio()">
             <span class="material-icons align-middle">picture_as_pdf</span> RELATÓRIO PDF
           </button>
@@ -360,17 +349,22 @@
 
       <!-- Admin Only Buttons -->
       <div id="adminButtons" class="row g-3 mb-4" style="display: none;">
-        <div class="col-md-4 col-12">
+        <div class="col-md-3 col-12">
+          <button class="btn btn-primary w-100 btn-lgex shadow-sm" onclick="abrir('secReg')">
+            <span class="material-icons align-middle">swap_horiz</span> REGISTRAR MOVIMENTAÇÃO
+          </button>
+        </div>
+        <div class="col-md-3 col-12">
           <button class="btn btn-outline-primary w-100 btn-lgex" onclick="abrir('secMat')">
             <span class="material-icons align-middle">add</span> NOVO MATERIAL
           </button>
         </div>
-        <div class="col-md-4 col-12">
+        <div class="col-md-3 col-12">
           <button class="btn btn-outline-success w-100 btn-lgex" onclick="abrir('secUsr')">
             <span class="material-icons align-middle">person_add</span> NOVO UTILIZADOR
           </button>
         </div>
-        <div class="col-md-4 col-12">
+        <div class="col-md-3 col-12">
           <button class="btn btn-outline-danger w-100 btn-lgex" onclick="abrir('secEdit')">
             <span class="material-icons align-middle">edit</span> EDITAR/EXCLUIR
           </button>
@@ -378,10 +372,11 @@
       </div>
     </div>
 
-    <!-- Registro de Movimentação -->
+    <!-- Registro de Movimentação (APENAS ADMIN) -->
     <div id="secReg" class="section-container">
       <h4 class="mb-4 text-primary">
         <span class="material-icons align-middle">swap_horiz</span> Registro de Movimentação
+        <span class="badge bg-danger ms-2">Apenas Administrador</span>
       </h4>
       <div class="row g-3">
         <div class="col-12">
@@ -414,12 +409,10 @@
           <textarea id="rObs" class="form-control" rows="3" placeholder="Descreva detalhes da movimentação..."></textarea>
         </div>
         
-        <div class="col-12 mt-4">
-          <div class="alert alert-info">
-            <label class="d-block fw-bold mb-2">
-              <span class="material-icons align-middle">lock</span> VALIDAÇÃO (PIN de 4 dígitos)
-            </label>
-            <input type="password" id="rPin" class="form-control pin-input" maxlength="4" inputmode="numeric" placeholder="****">
+        <div class="col-12 mt-3">
+          <div class="alert alert-warning">
+            <span class="material-icons align-middle">info</span>
+            <strong>Atenção:</strong> Este registro ficará associado ao seu nome e será registrado com data/hora automática.
           </div>
         </div>
       </div>
@@ -438,7 +431,7 @@
       </div>
     </div>
 
-    <!-- Consulta de Item -->
+    <!-- Consulta de Item (TODOS) -->
     <div id="secCons" class="section-container">
       <h4 class="mb-4">
         <span class="material-icons align-middle">search</span> Consulta de Histórico
@@ -455,7 +448,7 @@
       <button class="btn btn-light w-100 mt-3" onclick="voltar()">VOLTAR</button>
     </div>
 
-    <!-- Lista/Tabela -->
+    <!-- Lista/Tabela (TODOS) -->
     <div id="secList" class="section-container">
       <h4 id="listTitle" class="mb-3">Lista</h4>
       <div class="input-group mb-3">
@@ -468,10 +461,11 @@
       <button class="btn btn-light w-100 mt-3" onclick="voltar()">VOLTAR</button>
     </div>
 
-    <!-- Cadastro Material -->
+    <!-- Cadastro Material (APENAS ADMIN) -->
     <div id="secMat" class="section-container">
       <h4 class="mb-4">
         <span class="material-icons align-middle">add_box</span> Cadastrar Material
+        <span class="badge bg-danger ms-2">Apenas Administrador</span>
       </h4>
       <div class="mb-3">
         <label class="fw-bold">Nome do Material/Equipamento</label>
@@ -517,10 +511,11 @@
       </div>
     </div>
 
-    <!-- Cadastro Utilizador -->
+    <!-- Cadastro Utilizador (APENAS ADMIN) -->
     <div id="secUsr" class="section-container">
       <h4 class="mb-4">
         <span class="material-icons align-middle">person_add</span> Cadastrar Utilizador
+        <span class="badge bg-danger ms-2">Apenas Administrador</span>
       </h4>
       <div class="mb-3">
         <label class="fw-bold">Nome Completo</label>
@@ -530,16 +525,13 @@
         <label class="fw-bold">E-mail</label>
         <input type="email" id="uEmail" class="form-control p-3" placeholder="joao@exemplo.com">
       </div>
-      <div class="mb-3">
+      <div class="mb-4">
         <label class="fw-bold">Nível de Acesso</label>
         <select id="uRole" class="form-select p-3">
-          <option value="funcionario">Funcionário</option>
-          <option value="admin">Administrador</option>
+          <option value="funcionario">Funcionário (Apenas Consulta)</option>
+          <option value="admin">Administrador (Controle Total)</option>
         </select>
-      </div>
-      <div class="mb-4">
-        <label class="fw-bold">PIN de Segurança (4 dígitos)</label>
-        <input type="password" id="uPin" class="form-control p-3 pin-input" maxlength="4" inputmode="numeric" placeholder="****">
+        <small class="text-muted">Funcionários podem apenas visualizar materiais e histórico.</small>
       </div>
       <div class="row">
         <div class="col-md-6 col-12 mb-2">
@@ -553,10 +545,11 @@
       </div>
     </div>
 
-    <!-- Edição/Exclusão -->
+    <!-- Edição/Exclusão (APENAS ADMIN) -->
     <div id="secEdit" class="section-container">
       <h4 class="mb-4 text-danger">
         <span class="material-icons align-middle">edit</span> Editar ou Excluir Registros
+        <span class="badge bg-danger ms-2">Apenas Administrador</span>
       </h4>
       
       <div class="btn-group w-100 mb-4">
@@ -581,7 +574,7 @@
       <span class="material-icons">home</span>
       <small>Início</small>
     </div>
-    <div class="col nav-item-bottom" onclick="abrir('secReg')">
+    <div class="col nav-item-bottom" id="btnNavReg" onclick="abrirSeAdmin('secReg')" style="display:none;">
       <span class="material-icons">swap_horiz</span>
       <small>Registro</small>
     </div>
